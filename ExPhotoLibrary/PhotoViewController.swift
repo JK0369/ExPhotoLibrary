@@ -43,7 +43,18 @@ final class PhotoViewController: UIViewController {
   }()
   
   private var albums: [AlbumInfo]
-  private var currentIndex = 0 {
+  private var currentAlbumIndex = 0 {
+    didSet {
+      PhotoService.shared.getPHAssets(album: self.albums[self.currentAlbumIndex].album) { [weak self] phAssets in
+        self?.phAssets = phAssets
+      }
+    }
+  }
+  private var currentAlbum: PHFetchResult<PHAsset>? {
+    guard self.currentAlbumIndex <= self.albums.count - 1 else { return nil }
+    return self.albums[self.currentAlbumIndex].album
+  }
+  private var phAssets = [PHAsset]() {
     didSet {
       DispatchQueue.main.async {
         self.collectionView.reloadData()
@@ -75,7 +86,7 @@ final class PhotoViewController: UIViewController {
       self.pickerView.leftAnchor.constraint(equalTo: self.view.leftAnchor),
       self.pickerView.rightAnchor.constraint(equalTo: self.view.rightAnchor),
       self.pickerView.bottomAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.bottomAnchor),
-      self.pickerView.heightAnchor.constraint(equalToConstant: 200)
+      self.pickerView.heightAnchor.constraint(equalToConstant: 160)
     ])
     
     NSLayoutConstraint.activate([
@@ -84,6 +95,10 @@ final class PhotoViewController: UIViewController {
       self.collectionView.bottomAnchor.constraint(equalTo: self.pickerView.topAnchor),
       self.collectionView.topAnchor.constraint(equalTo: self.view.safeAreaLayoutGuide.topAnchor),
     ])
+    
+    PhotoService.shared.getPHAssets(album: self.albums[self.currentAlbumIndex].album) { [weak self] phAssets in
+      self?.phAssets = phAssets
+    }
   }
   required init?(coder: NSCoder) {
     fatalError()
@@ -120,31 +135,29 @@ extension PhotoViewController: UIPickerViewDataSource, UIPickerViewDelegate {
     return pickerLabel
   }
   func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
-    self.currentIndex = row
+    self.currentAlbumIndex = row
   }
 }
 
 extension PhotoViewController: UICollectionViewDataSource {
   func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-    guard self.currentIndex <= self.albums.count - 1 else {
-      return 0
-    }
-    return self.albums[self.currentIndex].count
+    self.phAssets.count
   }
   func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-    let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PhotoCell.id, for: indexPath) as! PhotoCell
-    PhotoService.shared.getPHAssets(album: self.albums[currentIndex].album) { phAssets in
-      phAssets.forEach { phAsset in
-        PhotoService.shared.fetchImages(
-          asset: phAsset,
-          size: .init(width: Const.length * Const.scale, height: Const.length * Const.scale),
-          contentMode: .aspectFit) { [weak cell] image in
-            DispatchQueue.main.async {
-              cell?.prepare(image: image)
-            }
-          }
+    guard
+      let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PhotoCell.id, for: indexPath) as? PhotoCell
+    else { fatalError() }
+    
+    PhotoService.shared.fetchImages(
+      asset: self.phAssets[indexPath.item],
+      size: .init(width: Const.length * Const.scale, height: Const.length * Const.scale),
+      contentMode: .aspectFit
+    ) { [weak cell] image in
+      DispatchQueue.main.async {
+        cell?.prepare(image: image)
       }
     }
+    
     return cell
   }
 }

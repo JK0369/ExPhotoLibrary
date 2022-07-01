@@ -105,7 +105,7 @@ final class PhotoService: NSObject {
     )
     guard 0 < smartAlbums.count else { return }
     smartAlbums.enumerateObjects { smartAlbum, index, pointer in
-      guard index + 1 < smartAlbums.count else {
+      guard index <= smartAlbums.count - 1 else {
         pointer.pointee = true
         return
       }
@@ -131,7 +131,7 @@ final class PhotoService: NSObject {
     var phAssets = [PHAsset]()
     
     album.enumerateObjects { asset, index, stopPointer in
-      guard index + 1 < album.count else {
+      guard index <= album.count - 1 else {
         stopPointer.pointee = true
         return
       }
@@ -151,7 +151,7 @@ final class PhotoService: NSObject {
     option.isNetworkAccessAllowed = true // for icloud
     option.deliveryMode = .highQualityFormat
     
-    PhotoService.shared.imageManager.requestImage(
+    self.imageManager.requestImage(
       for: asset,
       targetSize: size,
       contentMode: contentMode,
