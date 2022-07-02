@@ -141,7 +141,7 @@ final class PhotoService: NSObject {
     completion(phAssets)
   }
   
-  func fetchImages(
+  func fetchImage(
     asset: PHAsset,
     size: CGSize,
     contentMode: PHImageContentMode,

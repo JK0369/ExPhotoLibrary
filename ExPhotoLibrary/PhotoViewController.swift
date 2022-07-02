@@ -148,7 +148,7 @@ extension PhotoViewController: UICollectionViewDataSource {
       let cell = collectionView.dequeueReusableCell(withReuseIdentifier: PhotoCell.id, for: indexPath) as? PhotoCell
     else { fatalError() }
     
-    PhotoService.shared.fetchImages(
+    PhotoService.shared.fetchImage(
       asset: self.phAssets[indexPath.item],
       size: .init(width: Const.length * Const.scale, height: Const.length * Const.scale),
       contentMode: .aspectFit
